@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Nifki Demo</title>
+    <title>GAME NAME</title>
   </head>
 
   <body style="background-color: white">
@@ -31,7 +31,10 @@
     <script src="assembler.js"></script>
     <script src="interpreter.js"></script>
     <script src="nifki.js"></script>
-    <script>document.getElementById("game").focus();</script>
+    <script>
+      document.getElementById("game").focus();
+      window.addEventListener("DOMContentLoaded", function () { playGame("Rocks"); }, false);
+    </script>
 
     <h2>Instructions</h2>
 
