@@ -201,17 +201,10 @@ async function onPageLoad() {
     const gameData = await JSZip.loadAsync(zipData);
     const classPath = "org/sc3d/apt/crazon/gamedata/";
     const code = await gameData.files[classPath + "asm.nfk"].async("string");
+    const imageList = (await gameData.files[classPath + "resources.txt"].async("string")).split("\n");
+    if (imageList[imageList.length - 1] === "") { imageList.pop(); }
     loadImagesThen(
-        [
-            "Rocks_rockPNG",
-            "Rocks_blankPNG",
-            "Rocks_leftPNG",
-            "Rocks_diamondPNG",
-            "Rocks_earthPNG",
-            "Rocks_manPNG",
-            "Rocks_rightPNG",
-            "Rocks_wallPNG"
-        ],
+        imageList,
         function(images) {
             run(
                 assemble(code),
