@@ -168,6 +168,20 @@ function run(code, images, properties, canvas) {
     );
 }
 
+function parseProperties(text) {
+    const props = {name: "", width: "256", height: "256", msPerFrame: "40", debug: "false"}
+    for (var line of text.split("\n")) {
+        line = line.split("#")[0].trim();
+        if (line === "") { continue; }
+        const toks = line.split(":");
+        if (toks.length !== 2) {
+            throw new Error(`badly formed line in properties: ${line}`);
+        }
+        props[toks[0].trim()] = toks[1].trim()
+    }
+    return props
+}
+
 async function fetchBlob(url) {
     const response = await fetch(url);
     if (!response.ok) {
@@ -191,11 +205,11 @@ async function onPageLoad() {
         await image.decode();
         images[imageName] = image;
     }
-
+    const props = parseProperties(await gameData.files[classPath + "properties.txt"].async("string"));
     run(
         assemble(code),
         images,
-        {"w": 384, "h": 384, "msPerFrame": 40},
+        {"w": parseInt(props.width), "h": parseInt(props.height), "msPerFrame": parseInt(props.msPerFrame)},
         document.getElementById("game")
     );
 }
