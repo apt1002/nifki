@@ -188,7 +188,12 @@ function loadImagesThen(imageFilenames, callback) {
     }
 }
 
-function onPageLoad() {
+async function onPageLoad() {
+    const response = await fetch("asm.nfk");
+    if (!response.ok) {
+        /// FIXME
+    }
+    const code = await response.text();
     loadImagesThen(
         [
             "Rocks_rockPNG",
@@ -202,7 +207,7 @@ function onPageLoad() {
         ],
         function(images) {
             run(
-                assemble(TEST_CODE),
+                assemble(code),
                 images,
                 {"w": 384, "h": 384, "msPerFrame": 40},
                 document.getElementById("game")
