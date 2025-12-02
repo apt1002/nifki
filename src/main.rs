@@ -1,6 +1,5 @@
 use std::collections::{HashMap};
 use std::fs::{File};
-use std::io::{Read};
 use std::path::{PathBuf};
 
 use petite_http::{self as ph, html, HttpOkay, HttpError};
@@ -25,8 +24,7 @@ impl Nifki {
     fn parse_properties(&self, pagename: &str) -> Result<Properties, HttpError> {
         let mut properties_path = self.page_directory(pagename);
         properties_path.push("properties.txt");
-        let mut properties_text = String::new();
-        File::open(properties_path)?.read_to_string(&mut properties_text)?;
+        let properties_text = std::fs::read_to_string(properties_path)?;
         let mut props: Properties = HashMap::from_iter([
             ("name", "".into()),
             ("width", "256".into()),
