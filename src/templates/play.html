@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
   <head>
     <link rel="stylesheet" type="text/css" href="/stylesheet.css"/>
     <title>{pagename}</title>
@@ -35,6 +34,9 @@
           id="game"
           style="width: {width}px; height: {height}px"
           tabIndex="1"
+          data-width="{width}"
+          data-height="{height}"
+          data-msPerFrame="{msPerFrame}"
         >
           The game should be here. Perhaps JavaScript or &lt;canvas&gt; are
           turned off.
@@ -57,6 +59,5 @@
       document.getElementById("game").focus();
       window.addEventListener("DOMContentLoaded", function () {{ playGame("{pagename}"); }, false);
     </script>
-
   </body>
 </html>
