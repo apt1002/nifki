@@ -1,5 +1,0 @@
-name: Berb's first program
-width: 256
-height: 256
-msPerFrame: 20
-debug: false

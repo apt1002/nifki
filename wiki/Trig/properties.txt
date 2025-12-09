@@ -1,5 +1,0 @@
-name: Trig
-width: 256
-height: 256
-msPerFrame: 40
-debug: false
