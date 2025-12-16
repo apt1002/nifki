@@ -4,7 +4,7 @@ use std::fs::{File};
 use std::path::{Path, PathBuf};
 
 use petite_http::{self as ph, html, HttpOkay, HttpError};
-use html::{Template};
+use html::{Concat, Template};
 
 // ----------------------------------------------------------------------------
 
@@ -60,7 +60,7 @@ impl ph::Route for Nifki {
     fn route(&mut self, path: &[String], _callback: impl ph::Callback) -> ph::Result {
         let mut path_iter = path.into_iter();
         let Some(page) = path_iter.next() else {
-            return Ok(HttpOkay::Redirect("static/index.html".into()))
+            return Ok(HttpOkay::Redirect("pages".into()))
         };
         if page == "static" {
             let mut path = PathBuf::from(&*self.static_root);
@@ -80,7 +80,25 @@ impl ph::Route for Nifki {
             return Ok(HttpOkay::Chars {data: include_str!("stylesheet.css").into(), content_type: ph::content_types::CSS});
         } else if page == "pages" {
             let Some(pagename) = path_iter.next() else {
-                return Err(HttpError::Invalid);
+                let mut all_pages = Vec::new();
+                for dir_entry in self.wiki_root.read_dir()? {
+                    let page = String::from(dir_entry?.path().file_name().unwrap().to_str().unwrap());
+                    if !page.starts_with(".") && page != "nifki-out" { all_pages.push(page); }
+                }
+                all_pages.sort();
+                let page_links: Concat = all_pages.into_iter().map(
+                    |page| Template(
+                        "   <li><a href=\"/pages/{page}/play\">{page}</a></li>",
+                        Box::new([("page", Box::new(format!("{}", page)))]),
+                    ),
+                ).collect();
+                return Ok(HttpOkay::Html(Box::new(Template(
+                    include_str!("templates/list-of-all-pages.html"),
+                    Box::new([
+                        ("title", Box::new("List of All Pages")),
+                        ("page_names", Box::new(page_links))
+                    ]),
+                ))));
             };
             let props: Properties = self.parse_properties(pagename)?;
             let Some(action) = path_iter.next() else {
