@@ -1,6 +1,7 @@
 use std::collections::{HashMap};
+use std::{env};
 use std::fs::{File};
-use std::path::{PathBuf};
+use std::path::{Path, PathBuf};
 
 use petite_http::{self as ph, html, HttpOkay, HttpError};
 use html::{Template};
@@ -11,12 +12,21 @@ type Properties = HashMap<&'static str, String>;
 
 // ----------------------------------------------------------------------------
 
-#[derive(Default, Debug, Clone)]
-pub struct Nifki {}
+#[derive(Debug, Clone)]
+pub struct Nifki {
+    /// The filesystem path of the wiki data directory.
+    wiki_root: Box<Path>,
+
+    /// The filesystem path of the `js` directory.
+    js_root: Box<Path>,
+
+    /// The filesystem path of the `static` directory.
+    static_root: Box<Path>,
+}
 
 impl Nifki {
     fn page_directory(&self, pagename: &str) -> PathBuf {
-        let mut path = PathBuf::from("/home/apt1002/nifki/wiki");
+        let mut path = PathBuf::from(&*self.wiki_root);
         path.push(pagename);
         path
     }
@@ -53,7 +63,7 @@ impl ph::Route for Nifki {
             return Ok(HttpOkay::Redirect("static/index.html".into()))
         };
         if page == "static" {
-            let mut path = PathBuf::from("/home/apt1002/nifki/rust-nifki/static");
+            let mut path = PathBuf::from(&*self.static_root);
             for filename in path_iter {
                 path.push(filename);
             }
@@ -62,8 +72,9 @@ impl ph::Route for Nifki {
             let Some(filename) = path_iter.next() else {
                 return Err(HttpError::NotFound);
             };
-            let mut path = PathBuf::from("/home/apt1002/nifki/rust-nifki/js");
+            let mut path = PathBuf::from(&*self.js_root);
             path.push(filename);
+            println!("js path = {:?}", path);
             return Ok(HttpOkay::File {file: File::open(path)?, content_type: Some(ph::content_types::JS)});
         } else if page == "stylesheet.css" {
             return Ok(HttpOkay::Chars {data: include_str!("stylesheet.css").into(), content_type: ph::content_types::CSS});
@@ -88,7 +99,8 @@ impl ph::Route for Nifki {
                     ]),
                 ))));
             } else if let Some(_) = ph::remove_extension(action, "jar") {
-                let mut path = PathBuf::from("/home/apt1002/nifki/wiki/nifki-out");
+                let mut path = PathBuf::from(&*self.wiki_root);
+                path.push("nifki-out");
                 path.push(format!("{}.jar", pagename));
                 return Ok(HttpOkay::Bytes {data: std::fs::read(path)?, content_type: ph::content_types::JAR});
             } else {
@@ -101,6 +113,23 @@ impl ph::Route for Nifki {
 
 // ----------------------------------------------------------------------------
 
+/// The default value of [`Nifki::WIKI_ROOT`].
+pub const WIKI_ROOT: &'static str = "/home/apt1002/nifki/wiki";
+
+/// The default value of [`Nifki::JS_ROOT`].
+pub const JS_ROOT: &'static str = "/home/apt1002/nifki/platform/html5/js";
+
+/// The default value of [`Nifki::STATIC_ROOT`].
+pub const STATIC_ROOT: &'static str = "/home/apt1002/nifki/rust-nifki/static";
+
 fn main() {
-    ph::start("localhost:8080".into(), None, Nifki::default());
+    let wiki_root = env::var("NIFKI_WIKI_ROOT").unwrap_or_else(|_| WIKI_ROOT.to_owned());
+    let js_root = env::var("NIFKI_JS_ROOT").unwrap_or_else(|_| JS_ROOT.to_owned());
+    let static_root = env::var("NIFKI_STATIC_ROOT").unwrap_or_else(|_| STATIC_ROOT.to_owned());
+    let server = Nifki {
+        wiki_root: Path::new(wiki_root.as_str()).into(),
+        js_root: Path::new(js_root.as_str()).into(),
+        static_root: Path::new(static_root.as_str()).into(),
+    };
+    ph::start("localhost:8080".into(), None, server);
 }
